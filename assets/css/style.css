@@ -13,7 +13,7 @@
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--steel);color:var(--deep);font-family:var(--f);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
-.site{max-width:1440px;margin:0 auto;position:relative;overflow:hidden;background:var(--steel)}
+.site{width:100%;max-width:none;margin:0;position:relative;overflow:hidden;background:var(--steel)}
 .gut{padding-left:var(--gut);padding-right:var(--gut)}
 [hidden]{display:none!important}
 a{color:inherit}
