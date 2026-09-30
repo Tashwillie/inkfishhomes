@@ -147,23 +147,41 @@
     ].join("\n");
   }
 
+  function showDone(form, mode) {
+    var done = form.parentElement.querySelector(".cp-done");
+    if (!done) return;
+    form.hidden = true;
+    done.hidden = false;
+    done.setAttribute("data-mode", mode);
+    var close = done.querySelector("[data-close], a, button");
+    if (close) close.focus();
+  }
+
   document.querySelectorAll("form[data-form='homes']").forEach(function (form) {
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       if (!validate(form)) return;
       var data = {};
       new FormData(form).forEach(function (v, k) { data[k] = v.toString(); });
-      var subject = "Inkfish Homes enquiry: " + (data.about || "");
-      var href = "mailto:admin@inkfishhomes.com?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(lines(data));
-      var done = form.parentElement.querySelector(".cp-done");
-      if (done) {
-        form.hidden = true;
-        done.hidden = false;
-        done.setAttribute("data-mode", "mail");
-        var close = done.querySelector("[data-close], a, button");
-        if (close) close.focus();
-      }
-      window.location.href = href;
+      var button = form.querySelector('[type="submit"]');
+      if (button) button.disabled = true;
+      fetch("/api/enquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      }).then(function (r) {
+        if (!r.ok) throw new Error("not stored");
+        return r.json();
+      }).then(function () {
+        showDone(form, "sent");
+      }).catch(function () {
+        var subject = "Inkfish Homes enquiry: " + (data.about || "");
+        var href = "mailto:admin@inkfishhomes.com?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(lines(data));
+        showDone(form, "mail");
+        window.location.href = href;
+      }).then(function () {
+        if (button) button.disabled = false;
+      });
     });
   });
 
