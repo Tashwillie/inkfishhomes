@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /inkfish-homes-single-file.html
+
+Sitemap: https://inkfishhomes.com/sitemap.xml
