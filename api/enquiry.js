@@ -93,15 +93,17 @@ function recordFrom(fields, data) {
     if (key && record[key] == null) record[key] = value;
   }
 
-  set(["Name", "Deal_Name", "Last_Name", "Full_Name"], (data.name || "Website enquiry") + (data.org ? " — " + data.org : ""));
+  const title = [(data.name || "Website enquiry"), data.org, data.email].filter(Boolean).join(" — ").slice(0, 255);
+  set(["Name", "Deal_Name", "Last_Name", "Full_Name"], title);
+  set(["Property_Address", "Address"], data.where);
+  set(["Builder_Name", "Company", "Account_Name", "Organisation", "Organization"], data.org);
   set(["Email", "Email_Address"], data.email);
   set(["Phone", "Mobile", "Telephone"], data.tel);
-  set(["Company", "Account_Name", "Organisation", "Organization"], data.org);
-  set(["Title", "Designation", "Job_Title"], data.title);
   set(["Description", "Message", "Details"], details);
   set(["Lead_Source", "Source"], "Website");
 
-  if (!Object.keys(record).length) record.Name = data.name || "Website enquiry";
+  if (!Object.keys(record).length) record.Name = title;
+  record._note = details;
   return record;
 }
 
@@ -126,12 +128,31 @@ module.exports = async function handler(req, res) {
     const token = await accessToken();
     const moduleName = await propertyModule(token);
     const fields = (await zoho("/crm/v8/settings/fields?module=" + encodeURIComponent(moduleName), token)).fields || [];
+    const record = recordFrom(fields, data);
+    const note = record._note;
+    delete record._note;
     const created = await zoho("/crm/v8/" + encodeURIComponent(moduleName), token, {
       method: "POST",
-      body: { data: [recordFrom(fields, data)], trigger: ["workflow"] }
+      body: { data: [record], trigger: ["workflow"] }
     });
     const row = (created.data || [])[0];
-    if (!row || row.status === "error") {
+    if (!row || row.status === "error" || !row.details || !row.details.id) {
+      res.status(502).json({ ok: false });
+      return;
+    }
+    const noted = await zoho("/crm/v8/Notes", token, {
+      method: "POST",
+      body: {
+        data: [{
+          Note_Title: "Website enquiry",
+          Note_Content: note,
+          Parent_Id: { id: row.details.id, module: { api_name: moduleName } },
+          $se_module: moduleName
+        }]
+      }
+    });
+    const noteRow = (noted.data || [])[0];
+    if (!noteRow || noteRow.status === "error") {
       res.status(502).json({ ok: false });
       return;
     }
