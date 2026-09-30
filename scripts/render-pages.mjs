@@ -139,6 +139,7 @@ function documentPage(page) {
 <link rel="canonical" href="${canonical}">
 <meta name="theme-color" content="#00353F">
 <meta name="robots" content="index,follow">
+<meta name="google-site-verification" content="A4tkW2_D_aHU_9fqfCaSyfAiMgVERLGloLYnITOj9ak">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Inkfish Homes">
 <meta property="og:locale" content="en_GB">
